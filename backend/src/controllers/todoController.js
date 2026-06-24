@@ -66,7 +66,7 @@ const TodoController = {
   // Create a new todo (title is required)
   createTodo(req, res, next) {
     try {
-      const { title, description, priority, category, dueDate } = req.body;
+      const { title, description, priority, category, dueDate, subtasks, tags } = req.body;
 
       // Validate required field
       if (!title || typeof title !== 'string' || title.trim().length === 0) {
@@ -91,6 +91,8 @@ const TodoController = {
         priority,
         category: category ? category.trim() : 'general',
         dueDate: dueDate || null,
+        subtasks: subtasks || [],
+        tags: tags || [],
       });
 
       res.status(201).json({
@@ -106,7 +108,7 @@ const TodoController = {
   // Update an existing todo (partial updates supported)
   updateTodo(req, res, next) {
     try {
-      const { title, description, priority, category, dueDate, completed } = req.body;
+      const { title, description, priority, category, dueDate, completed, subtasks, tags } = req.body;
 
       // If title is being updated, ensure it's not empty
       if (title !== undefined && (typeof title !== 'string' || title.trim().length === 0)) {
@@ -132,6 +134,8 @@ const TodoController = {
         category,
         dueDate,
         completed,
+        subtasks,
+        tags,
       });
 
       if (!todo) {

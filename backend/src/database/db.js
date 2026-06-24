@@ -29,10 +29,25 @@ db.exec(`
     category    TEXT DEFAULT 'general',
     dueDate     TEXT,
     completed   INTEGER DEFAULT 0,
+    subtasks    TEXT DEFAULT '[]',
+    tags        TEXT DEFAULT '[]',
     createdAt   TEXT NOT NULL,
     updatedAt   TEXT NOT NULL
   )
 `);
+
+// Support column migrations dynamically if db file already exists
+try {
+  db.exec("ALTER TABLE todos ADD COLUMN subtasks TEXT DEFAULT '[]'");
+} catch (e) {
+  // Ignore error if column already exists
+}
+
+try {
+  db.exec("ALTER TABLE todos ADD COLUMN tags TEXT DEFAULT '[]'");
+} catch (e) {
+  // Ignore error if column already exists
+}
 
 console.log('✅ Todos table ready');
 

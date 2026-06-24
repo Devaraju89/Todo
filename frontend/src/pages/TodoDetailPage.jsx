@@ -134,6 +134,22 @@ const TodoDetailPage = () => {
     }
   };
 
+  /** Toggle subtask checkbox status on detail page */
+  const handleToggleSubtask = async (subtaskId) => {
+    try {
+      const updatedSubtasks = todo.subtasks.map((s) => {
+        if (s.id === subtaskId) {
+          return { ...s, completed: !s.completed };
+        }
+        return s;
+      });
+      const updated = await updateTodo(id, { subtasks: updatedSubtasks });
+      setTodo(updated);
+    } catch (error) {
+      toast.error('Failed to update subtask');
+    }
+  };
+
   /** Delete the todo */
   const handleDelete = async () => {
     try {
@@ -293,6 +309,45 @@ const TodoDetailPage = () => {
               >
                 <FiClock size={14} /> {getRelativeTime(todo.dueDate)}
               </p>
+            </div>
+          )}
+
+          {/* Subtasks Section */}
+          {todo.subtasks && todo.subtasks.length > 0 && (
+            <div className="detail-description" style={{ marginTop: '24px' }}>
+              <h3 className="detail-section-title">Subtasks Checklist</h3>
+              <div className="subtasks-list" style={{ marginTop: '12px' }}>
+                {todo.subtasks.map((sub) => (
+                  <div key={sub.id} className="subtask-item" style={{ background: 'rgba(255,255,255,0.01)', padding: '10px 14px' }}>
+                    <div className="subtask-item-left">
+                      <input
+                        type="checkbox"
+                        className="custom-checkbox"
+                        checked={sub.completed}
+                        onChange={() => handleToggleSubtask(sub.id)}
+                        style={{ marginRight: '10px' }}
+                      />
+                      <span className={`subtask-text ${sub.completed ? 'completed' : ''}`}>
+                        {sub.text}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tags Section */}
+          {todo.tags && todo.tags.length > 0 && (
+            <div className="detail-description" style={{ marginTop: '24px' }}>
+              <h3 className="detail-section-title">Tags</h3>
+              <div className="todo-tags-container" style={{ marginTop: '12px' }}>
+                {todo.tags.map((tag) => (
+                  <span key={tag} className="tag-badge" style={{ fontSize: '0.85rem', padding: '6px 14px' }}>
+                    #{tag}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 

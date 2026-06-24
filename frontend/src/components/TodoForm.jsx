@@ -17,6 +17,12 @@ const TodoForm = ({ onSubmit, initialData = null, onCancel }) => {
     dueDate: '',
   });
 
+  const [subtasks, setSubtasks] = useState([]);
+  const [newSubtask, setNewSubtask] = useState('');
+
+  const [tags, setTags] = useState([]);
+  const [newTag, setNewTag] = useState('');
+
   const [errors, setErrors] = useState({});
 
   // Populate form when editing
@@ -31,6 +37,8 @@ const TodoForm = ({ onSubmit, initialData = null, onCancel }) => {
           ? new Date(initialData.dueDate).toISOString().split('T')[0]
           : '',
       });
+      setSubtasks(initialData.subtasks || []);
+      setTags(initialData.tags || []);
     }
   }, [initialData]);
 
@@ -44,6 +52,37 @@ const TodoForm = ({ onSubmit, initialData = null, onCancel }) => {
     }
   };
 
+  // Subtask Add/Remove handlers
+  const handleAddSubtask = (e) => {
+    e.preventDefault();
+    if (newSubtask.trim()) {
+      setSubtasks((prev) => [
+        ...prev,
+        { id: Math.random().toString(), text: newSubtask.trim(), completed: false },
+      ]);
+      setNewSubtask('');
+    }
+  };
+
+  const handleRemoveSubtask = (id, e) => {
+    e.preventDefault();
+    setSubtasks((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  // Tag Add/Remove handlers
+  const handleAddTag = (e) => {
+    e.preventDefault();
+    if (newTag.trim() && !tags.includes(newTag.trim().toLowerCase())) {
+      setTags((prev) => [...prev, newTag.trim().toLowerCase()]);
+      setNewTag('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove, e) => {
+    e.preventDefault();
+    setTags((prev) => prev.filter((t) => t !== tagToRemove));
+  };
+
   // Validate and submit
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -54,7 +93,11 @@ const TodoForm = ({ onSubmit, initialData = null, onCancel }) => {
       return;
     }
 
-    onSubmit(formData);
+    onSubmit({
+      ...formData,
+      subtasks,
+      tags,
+    });
 
     // Reset form if not editing
     if (!isEditMode) {
@@ -65,6 +108,8 @@ const TodoForm = ({ onSubmit, initialData = null, onCancel }) => {
         category: 'General',
         dueDate: '',
       });
+      setSubtasks([]);
+      setTags([]);
     }
   };
 
@@ -212,6 +257,98 @@ const TodoForm = ({ onSubmit, initialData = null, onCancel }) => {
               onChange={handleChange}
             />
           </div>
+        </div>
+
+        {/* Subtasks Section */}
+        <div className="subtasks-section">
+          <label className="form-label">Subtasks Checklist</label>
+          <div className="input-with-button">
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Add a step to this task..."
+              value={newSubtask}
+              onChange={(e) => setNewSubtask(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddSubtask(e);
+                }
+              }}
+            />
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleAddSubtask}
+              style={{ margin: 0, whiteSpace: 'nowrap' }}
+            >
+              + Add Step
+            </button>
+          </div>
+
+          {subtasks.length > 0 && (
+            <div className="subtasks-list">
+              {subtasks.map((subtask) => (
+                <div key={subtask.id} className="subtask-item">
+                  <div className="subtask-item-left">
+                    <span className="subtask-text">{subtask.text}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-icon text-danger"
+                    onClick={(e) => handleRemoveSubtask(subtask.id, e)}
+                    style={{ padding: '4px' }}
+                  >
+                    <FiX size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Tags Section */}
+        <div className="tags-section">
+          <label className="form-label">Tags / Labels</label>
+          <div className="input-with-button">
+            <input
+              type="text"
+              className="form-input"
+              placeholder="e.g. bug, quick, documentation..."
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddTag(e);
+                }
+              }}
+            />
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleAddTag}
+              style={{ margin: 0, whiteSpace: 'nowrap' }}
+            >
+              + Tag
+            </button>
+          </div>
+
+          {tags.length > 0 && (
+            <div className="tags-list">
+              {tags.map((tag) => (
+                <span key={tag} className="tag-badge">
+                  #{tag}
+                  <button
+                    type="button"
+                    onClick={(e) => handleRemoveTag(tag, e)}
+                  >
+                    <FiX size={12} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Submit Actions */}

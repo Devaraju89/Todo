@@ -12,7 +12,7 @@ import {
  * Features priority-colored left border, animated checkbox,
  * hover lift effect, and contextual overdue indicators
  */
-const TodoCard = ({ todo, onToggle, onDelete, onEdit }) => {
+const TodoCard = ({ todo, onToggle, onDelete, onEdit, onUpdate }) => {
   const navigate = useNavigate();
 
   // Format the due date for display
@@ -40,6 +40,27 @@ const TodoCard = ({ todo, onToggle, onDelete, onEdit }) => {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0 },
     exit: { opacity: 0, x: -100, transition: { duration: 0.3 } },
+  };
+
+  // Subtasks progress calculation
+  const totalSubtasks = todo.subtasks?.length || 0;
+  const completedSubtasks = todo.subtasks?.filter((s) => s.completed).length || 0;
+  const progressPercent = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : 0;
+
+  const handleToggleSubtask = (subtaskId) => {
+    if (!onUpdate) return;
+    const updatedSubtasks = todo.subtasks.map((s) => {
+      if (s.id === subtaskId) {
+        return { ...s, completed: !s.completed };
+      }
+      return s;
+    });
+    // Calculate if all subtasks are completed and automatically prompt or toggle todo completion
+    const allCompleted = updatedSubtasks.every(s => s.completed);
+    onUpdate(todo.id, { 
+      subtasks: updatedSubtasks,
+      // If there are subtasks, and they are all checked, keep sync, but let user manually override if needed
+    });
   };
 
   return (
@@ -97,6 +118,33 @@ const TodoCard = ({ todo, onToggle, onDelete, onEdit }) => {
       {/* Description (truncated) */}
       {todo.description && (
         <p className="todo-card-description">{todo.description}</p>
+      )}
+
+      {/* Subtasks Progress Bar */}
+      {totalSubtasks > 0 && (
+        <div className="todo-progress-container">
+          <div className="todo-progress-text">
+            <span>Checklist</span>
+            <span>{completedSubtasks}/{totalSubtasks} ({progressPercent}%)</span>
+          </div>
+          <div className="todo-progress-bar-bg">
+            <div 
+              className="todo-progress-bar-fill" 
+              style={{ width: `${progressPercent}%` }} 
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Tags list */}
+      {todo.tags && todo.tags.length > 0 && (
+        <div className="todo-tags-container">
+          {todo.tags.map((tag) => (
+            <span key={tag} className="tag-badge">
+              #{tag}
+            </span>
+          ))}
+        </div>
       )}
 
       {/* Card Footer: Badges & Meta */}

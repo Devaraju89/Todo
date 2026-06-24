@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPlus, FiInbox } from 'react-icons/fi';
+import { FiPlus, FiInbox, FiGrid, FiList, FiDownload, FiUpload } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 import TodoCard from '../components/TodoCard';
@@ -20,11 +20,13 @@ import {
 /**
  * TodoListPage — Main task list page with full CRUD functionality
  * Features: Stats panel, filter bar, animated todo grid,
- * inline editing, confirm modals, and empty/loading states
+ * inline editing, confirm modals, empty/loading states,
+ * and Eisenhower Matrix Quadrants View
  */
 const TodoListPage = () => {
   // ---- State Management ----
   const [todos, setTodos] = useState([]);
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'matrix'
   const [stats, setStats] = useState({
     total: 0,
     completed: 0,
@@ -98,6 +100,7 @@ const TodoListPage = () => {
   };
 
   /** Update an existing todo */
+  /** Update an existing todo */
   const handleUpdate = async (formData) => {
     try {
       await updateTodo(editingTodo.id, formData);
@@ -108,6 +111,84 @@ const TodoListPage = () => {
     } catch (error) {
       toast.error(error.message || 'Failed to update task');
     }
+  };
+
+  /** Update a card property directly (like checklist toggle or priority shift) */
+  const handleUpdateCard = async (id, updatedFields) => {
+    try {
+      await updateTodo(id, updatedFields);
+      fetchTodos();
+      fetchStats();
+    } catch (error) {
+      toast.error('Failed to update task checklist');
+      console.error(error);
+    }
+  };
+
+  /** Export all tasks to JSON file */
+  const handleExport = () => {
+    try {
+      if (todos.length === 0) {
+        toast.error('No tasks to export!');
+        return;
+      }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(todos, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `taskflow_backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      toast.success('Tasks exported successfully! 📥');
+    } catch (e) {
+      toast.error('Export failed');
+    }
+  };
+
+  /** Import tasks from JSON file */
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const importedTodos = JSON.parse(event.target.result);
+        if (!Array.isArray(importedTodos)) {
+          toast.error('Invalid file format. Must be a JSON array of tasks.');
+          return;
+        }
+
+        let successCount = 0;
+        setLoading(true);
+
+        for (const t of importedTodos) {
+          if (t.title) {
+            // Re-create each todo on the server
+            await createTodo({
+              title: t.title,
+              description: t.description || '',
+              priority: t.priority || 'low',
+              category: t.category || 'General',
+              dueDate: t.dueDate || null,
+              subtasks: t.subtasks || [],
+              tags: t.tags || [],
+            });
+            successCount++;
+          }
+        }
+
+        toast.success(`Successfully imported ${successCount} tasks! 📤`);
+        fetchTodos();
+        fetchStats();
+      } catch (err) {
+        toast.error('Import failed. Invalid JSON structure.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsText(file);
   };
 
   /** Toggle todo completion status */
@@ -216,6 +297,34 @@ const TodoListPage = () => {
         )}
       </AnimatePresence>
 
+      {/* ---- View Switcher & Backup Actions ---- */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+        <div className="view-tabs" style={{ margin: 0 }}>
+          <button 
+            className={`view-tab-btn ${viewMode === 'list' ? 'active' : ''}`}
+            onClick={() => setViewMode('list')}
+          >
+            <FiList size={16} /> List Board
+          </button>
+          <button 
+            className={`view-tab-btn ${viewMode === 'matrix' ? 'active' : ''}`}
+            onClick={() => setViewMode('matrix')}
+          >
+            <FiGrid size={16} /> Eisenhower Matrix
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={handleExport} className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: '0.85rem' }}>
+            <FiDownload size={14} style={{ marginRight: '6px' }} /> Export Backup
+          </button>
+          <label className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: '0.85rem', cursor: 'pointer', margin: 0, display: 'inline-flex', alignItems: 'center' }}>
+            <FiUpload size={14} style={{ marginRight: '6px' }} /> Import Backup
+            <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
+          </label>
+        </div>
+      </div>
+
       {/* ---- Filter Bar ---- */}
       <FilterBar filters={filters} onFilterChange={setFilters} />
 
@@ -260,8 +369,107 @@ const TodoListPage = () => {
               </motion.button>
             )}
         </motion.div>
+      ) : viewMode === 'matrix' ? (
+        /* Eisenhower Matrix View */
+        <div className="matrix-grid">
+          {/* Quadrant 1: Urgent & Important */}
+          <div className="matrix-quadrant q-urgent-important">
+            <div className="matrix-quadrant-header">
+              <h3 className="matrix-quadrant-title">🔴 Urgent & Important (Do First)</h3>
+              <span className="matrix-quadrant-subtitle">Tasks with urgent priority</span>
+            </div>
+            <div className="matrix-quadrant-content">
+              {todos.filter((t) => t.priority === 'urgent').length === 0 ? (
+                <div className="matrix-empty-text">No urgent tasks</div>
+              ) : (
+                todos.filter((t) => t.priority === 'urgent').map((todo) => (
+                  <TodoCard
+                    key={todo.id}
+                    todo={todo}
+                    onToggle={handleToggle}
+                    onDelete={(id) => setDeleteTarget(id)}
+                    onEdit={handleEdit}
+                    onUpdate={handleUpdateCard}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Quadrant 2: Important, Not Urgent */}
+          <div className="matrix-quadrant q-important-noturgent">
+            <div className="matrix-quadrant-header">
+              <h3 className="matrix-quadrant-title">🟠 Important, Not Urgent (Schedule)</h3>
+              <span className="matrix-quadrant-subtitle">Tasks with high priority</span>
+            </div>
+            <div className="matrix-quadrant-content">
+              {todos.filter((t) => t.priority === 'high').length === 0 ? (
+                <div className="matrix-empty-text">No high priority tasks</div>
+              ) : (
+                todos.filter((t) => t.priority === 'high').map((todo) => (
+                  <TodoCard
+                    key={todo.id}
+                    todo={todo}
+                    onToggle={handleToggle}
+                    onDelete={(id) => setDeleteTarget(id)}
+                    onEdit={handleEdit}
+                    onUpdate={handleUpdateCard}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Quadrant 3: Urgent, Not Important */}
+          <div className="matrix-quadrant q-urgent-notimportant">
+            <div className="matrix-quadrant-header">
+              <h3 className="matrix-quadrant-title">🟡 Urgent, Not Important (Delegate)</h3>
+              <span className="matrix-quadrant-subtitle">Tasks with medium priority</span>
+            </div>
+            <div className="matrix-quadrant-content">
+              {todos.filter((t) => t.priority === 'medium').length === 0 ? (
+                <div className="matrix-empty-text">No medium priority tasks</div>
+              ) : (
+                todos.filter((t) => t.priority === 'medium').map((todo) => (
+                  <TodoCard
+                    key={todo.id}
+                    todo={todo}
+                    onToggle={handleToggle}
+                    onDelete={(id) => setDeleteTarget(id)}
+                    onEdit={handleEdit}
+                    onUpdate={handleUpdateCard}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Quadrant 4: Not Urgent & Not Important */}
+          <div className="matrix-quadrant q-noturgent-notimportant">
+            <div className="matrix-quadrant-header">
+              <h3 className="matrix-quadrant-title">🟢 Low Priority / Eliminate</h3>
+              <span className="matrix-quadrant-subtitle">Tasks with low priority</span>
+            </div>
+            <div className="matrix-quadrant-content">
+              {todos.filter((t) => t.priority === 'low').length === 0 ? (
+                <div className="matrix-empty-text">No low priority tasks</div>
+              ) : (
+                todos.filter((t) => t.priority === 'low').map((todo) => (
+                  <TodoCard
+                    key={todo.id}
+                    todo={todo}
+                    onToggle={handleToggle}
+                    onDelete={(id) => setDeleteTarget(id)}
+                    onEdit={handleEdit}
+                    onUpdate={handleUpdateCard}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       ) : (
-        /* Todo Cards Grid */
+        /* Regular Todo Cards Grid */
         <motion.div
           className="todo-grid"
           initial="hidden"
@@ -280,6 +488,7 @@ const TodoListPage = () => {
                 onToggle={handleToggle}
                 onDelete={(id) => setDeleteTarget(id)}
                 onEdit={handleEdit}
+                onUpdate={handleUpdateCard}
               />
             ))}
           </AnimatePresence>

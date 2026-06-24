@@ -54,29 +54,42 @@ const TodoModel = {
       query += ` ORDER BY ${sortField} ${sortOrder}`;
     }
 
-    return db.prepare(query).all(...params);
+    const rows = db.prepare(query).all(...params);
+    return rows.map(row => {
+      row.subtasks = JSON.parse(row.subtasks || '[]');
+      row.tags = JSON.parse(row.tags || '[]');
+      return row;
+    });
   },
 
   // ── Retrieve a single todo by its UUID ────────────────────────────────────
   getById(id) {
-    return db.prepare('SELECT * FROM todos WHERE id = ?').get(id);
+    const row = db.prepare('SELECT * FROM todos WHERE id = ?').get(id);
+    if (row) {
+      row.subtasks = JSON.parse(row.subtasks || '[]');
+      row.tags = JSON.parse(row.tags || '[]');
+    }
+    return row;
   },
 
   // ── Create a new todo ─────────────────────────────────────────────────────
-  create({ title, description = null, priority = 'medium', category = 'general', dueDate = null }) {
+  create({ title, description = null, priority = 'medium', category = 'general', dueDate = null, subtasks = [], tags = [] }) {
     const id = uuidv4();
     const now = new Date().toISOString();
 
+    const subtasksStr = typeof subtasks === 'string' ? subtasks : JSON.stringify(subtasks);
+    const tagsStr = typeof tags === 'string' ? tags : JSON.stringify(tags);
+
     db.prepare(`
-      INSERT INTO todos (id, title, description, priority, category, dueDate, completed, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)
-    `).run(id, title, description, priority, category, dueDate, now, now);
+      INSERT INTO todos (id, title, description, priority, category, dueDate, completed, subtasks, tags, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)
+    `).run(id, title, description, priority, category, dueDate, subtasksStr, tagsStr, now, now);
 
     return this.getById(id);
   },
 
   // ── Update an existing todo ───────────────────────────────────────────────
-  update(id, { title, description, priority, category, dueDate, completed }) {
+  update(id, { title, description, priority, category, dueDate, completed, subtasks, tags }) {
     const existing = this.getById(id);
     if (!existing) return null;
 
@@ -90,19 +103,27 @@ const TodoModel = {
       category: category !== undefined ? category : existing.category,
       dueDate: dueDate !== undefined ? dueDate : existing.dueDate,
       completed: completed !== undefined ? Number(completed) : existing.completed,
+      subtasks: subtasks !== undefined 
+        ? (typeof subtasks === 'string' ? subtasks : JSON.stringify(subtasks))
+        : (typeof existing.subtasks === 'string' ? existing.subtasks : JSON.stringify(existing.subtasks)),
+      tags: tags !== undefined 
+        ? (typeof tags === 'string' ? tags : JSON.stringify(tags))
+        : (typeof existing.tags === 'string' ? existing.tags : JSON.stringify(existing.tags))
     };
 
     db.prepare(`
       UPDATE todos
-      SET title = ?, description = ?, priority = ?, category = ?, dueDate = ?, completed = ?, updatedAt = ?
+      SET title = ?, description = ?, priority = ?, category = ?, dueDate = ?, completed = ?, subtasks = ?, tags = ?, updatedAt = ?
       WHERE id = ?
-    `).run(
+     `).run(
       updatedTodo.title,
       updatedTodo.description,
       updatedTodo.priority,
       updatedTodo.category,
       updatedTodo.dueDate,
       updatedTodo.completed,
+      updatedTodo.subtasks,
+      updatedTodo.tags,
       updatedAt,
       id
     );
