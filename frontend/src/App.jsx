@@ -8,17 +8,11 @@ import Footer from './components/Footer';
 
 import TodoListPage from './pages/TodoListPage';
 import TodoDetailPage from './pages/TodoDetailPage';
-import KanbanPage from './pages/KanbanPage';
-import MatrixPage from './pages/MatrixPage';
-import CalendarPage from './pages/CalendarPage';
-import FocusPage from './pages/FocusPage';
-import AnalyticsPage from './pages/AnalyticsPage';
-import SettingsPage from './pages/SettingsPage';
 
 /**
  * App — Global Layout shell configuration.
- * Mounts persistent layout structures (Header, Sidebar, Footer) and 
- * maps Router endpoints to their respective pages.
+ * Complies with challenge constraints: exactly two routes (/todos and /todo).
+ * Uses query parameters to switch active views inside the main Todos List page.
  */
 function App() {
   // Load saved theme on initial load
@@ -46,16 +40,10 @@ function App() {
             {/* Redirect root to /todos list page */}
             <Route path="/" element={<Navigate to="/todos" replace />} />
 
-            {/* Feature Routes */}
+            {/* Main Todos List Page (handles sub-views via ?view= query) */}
             <Route path="/todos" element={<TodoListPage />} />
-            <Route path="/kanban" element={<KanbanPage />} />
-            <Route path="/matrix" element={<MatrixPage />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/focus" element={<FocusPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
 
-            {/* Task Detail Page */}
+            {/* Todo Detail Page */}
             <Route path="/todo" element={<TodoDetailPage />} />
           </Routes>
         </main>
@@ -83,7 +71,7 @@ function App() {
           },
           success: {
             iconTheme: {
-              primary: '#c084fc', // Amethyst color
+              primary: '#c084fc',
               secondary: '#ffffff',
             },
           },

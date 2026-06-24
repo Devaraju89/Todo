@@ -12,30 +12,34 @@ import {
 
 /**
  * Sidebar — Pinned vertical navigation drawer.
- * Displays application links with icons and labels, tracking active routes.
+ * Displays application links with query parameters for view states.
  */
 const Sidebar = () => {
   const location = useLocation();
 
-  // Define navigation routes and menu items
+  // Extract current view parameter
+  const searchParams = new URLSearchParams(location.search);
+  const currentView = searchParams.get('view') || 'list';
+
+  // Define navigation routes and menu items using query params
   const menuItems = [
-    { path: '/todos', label: 'Tasks List', icon: <FiList size={18} /> },
-    { path: '/kanban', label: 'Kanban Board', icon: <FiColumns size={18} /> },
-    { path: '/matrix', label: 'Eisenhower Matrix', icon: <FiGrid size={18} /> },
-    { path: '/calendar', label: 'Deadlines Calendar', icon: <FiCalendar size={18} /> },
-    { path: '/focus', label: 'Focus Zone', icon: <FiClock size={18} /> },
-    { path: '/analytics', label: 'Analytics', icon: <FiBarChart2 size={18} /> },
-    { path: '/settings', label: 'Settings', icon: <FiSettings size={18} /> },
+    { path: '/todos', view: 'list', label: 'Tasks List', icon: <FiList size={18} /> },
+    { path: '/todos?view=kanban', view: 'kanban', label: 'Kanban Board', icon: <FiColumns size={18} /> },
+    { path: '/todos?view=matrix', view: 'matrix', label: 'Eisenhower Matrix', icon: <FiGrid size={18} /> },
+    { path: '/todos?view=calendar', view: 'calendar', label: 'Deadlines Calendar', icon: <FiCalendar size={18} /> },
+    { path: '/todos?view=focus', view: 'focus', label: 'Focus Zone', icon: <FiClock size={18} /> },
+    { path: '/todos?view=analytics', view: 'analytics', label: 'Analytics', icon: <FiBarChart2 size={18} /> },
+    { path: '/todos?view=settings', view: 'settings', label: 'Settings', icon: <FiSettings size={18} /> },
   ];
 
   return (
     <aside className="app-sidebar glass-card">
       <div className="sidebar-menu">
         {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname === '/todos' && currentView === item.view;
           return (
             <Link
-              key={item.path}
+              key={item.view}
               to={item.path}
               className={`sidebar-link ${isActive ? 'active' : ''}`}
             >
