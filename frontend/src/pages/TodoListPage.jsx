@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPlus, FiInbox, FiGrid, FiList, FiDownload, FiUpload } from 'react-icons/fi';
+import { FiPlus, FiInbox, FiGrid, FiList, FiDownload, FiUpload, FiCalendar } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 import TodoCard from '../components/TodoCard';
@@ -8,6 +8,9 @@ import TodoForm from '../components/TodoForm';
 import FilterBar from '../components/FilterBar';
 import StatsPanel from '../components/StatsPanel';
 import ConfirmModal from '../components/ConfirmModal';
+import PomodoroTimer from '../components/PomodoroTimer';
+import CalendarView from '../components/CalendarView';
+import KanbanBoard from '../components/KanbanBoard';
 import {
   getAllTodos,
   createTodo,
@@ -202,6 +205,18 @@ const TodoListPage = () => {
     }
   };
 
+  /** Handles completing a task when its Pomodoro timer expires */
+  const handleCompleteFocus = async (todoId) => {
+    try {
+      await toggleTodo(todoId);
+      fetchTodos();
+      fetchStats();
+      toast.success('Awesome! Focus task completed! 🏆');
+    } catch (e) {
+      toast.error('Failed to complete focus task');
+    }
+  };
+
   /** Confirm and execute deletion */
   const handleDeleteConfirm = async () => {
     try {
@@ -276,6 +291,9 @@ const TodoListPage = () => {
       {/* ---- Stats Panel ---- */}
       <StatsPanel stats={stats} />
 
+      {/* ---- Pomodoro Focus Space ---- */}
+      <PomodoroTimer todos={todos} onCompleteFocus={handleCompleteFocus} />
+
       {/* ---- Create Form (animated expand/collapse) ---- */}
       <AnimatePresence>
         {showForm && (
@@ -307,10 +325,22 @@ const TodoListPage = () => {
             <FiList size={16} /> List Board
           </button>
           <button 
+            className={`view-tab-btn ${viewMode === 'kanban' ? 'active' : ''}`}
+            onClick={() => setViewMode('kanban')}
+          >
+            <FiGrid size={16} /> Kanban Board
+          </button>
+          <button 
             className={`view-tab-btn ${viewMode === 'matrix' ? 'active' : ''}`}
             onClick={() => setViewMode('matrix')}
           >
             <FiGrid size={16} /> Eisenhower Matrix
+          </button>
+          <button 
+            className={`view-tab-btn ${viewMode === 'calendar' ? 'active' : ''}`}
+            onClick={() => setViewMode('calendar')}
+          >
+            <FiCalendar size={16} /> Deadlines Calendar
           </button>
         </div>
 
@@ -369,6 +399,21 @@ const TodoListPage = () => {
               </motion.button>
             )}
         </motion.div>
+      ) : viewMode === 'kanban' ? (
+        /* Kanban Board View */
+        <KanbanBoard
+          todos={todos}
+          onToggle={handleToggle}
+          onDelete={(id) => setDeleteTarget(id)}
+          onEdit={handleEdit}
+          onUpdate={handleUpdateCard}
+        />
+      ) : viewMode === 'calendar' ? (
+        /* Deadlines Calendar View */
+        <CalendarView
+          todos={todos}
+          onSelectTodo={handleEdit}
+        />
       ) : viewMode === 'matrix' ? (
         /* Eisenhower Matrix View */
         <div className="matrix-grid">

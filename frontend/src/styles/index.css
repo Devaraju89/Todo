@@ -1651,3 +1651,76 @@ h6 { font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-sp
   border-radius: 99px;
 }
 
+/* --------------------------------------------------------------------------
+   31. POMODORO TIMER STYLES
+   -------------------------------------------------------------------------- */
+.pomodoro-container {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-md));
+  -webkit-backdrop-filter: blur(var(--blur-md));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.pomodoro-container:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid rgba(192, 132, 252, 0.15);
+}
+
+/* --------------------------------------------------------------------------
+   32. CALENDAR VIEW STYLES
+   -------------------------------------------------------------------------- */
+.calendar-view-container {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-md));
+  -webkit-backdrop-filter: blur(var(--blur-md));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.calendar-cell {
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.calendar-cell:hover {
+  background: var(--glass-hover) !important;
+  transform: scale(1.05);
+}
+
+/* --------------------------------------------------------------------------
+   33. KANBAN BOARD STYLES
+   -------------------------------------------------------------------------- */
+.kanban-container {
+  margin-top: 12px;
+}
+
+.kanban-column {
+  background: rgba(255, 255, 255, 0.01) !important;
+  backdrop-filter: blur(var(--blur-md));
+  -webkit-backdrop-filter: blur(var(--blur-md));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: border var(--transition-normal);
+}
+
+.kanban-column:hover {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.kanban-column-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.kanban-column-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 99px;
+}
+
+
