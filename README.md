@@ -103,36 +103,48 @@ todo-app/
 - **Node.js** v18+ ([Download](https://nodejs.org/))
 - **npm** v9+ (comes with Node.js)
 
-### 1. Clone the Repository
+### 📦 Option A: Quick Concurrent Setup (Recommended)
 
-```bash
-git clone <repository-url>
-cd todo-app
-```
+Run everything from the root folder in just two commands:
 
-### 2. Start the Backend
+1. **Install all dependencies** (installs root, backend, and frontend dependencies):
+   ```bash
+   npm run install-all
+   ```
 
-```bash
-cd backend
-npm install
-npm run dev
-```
+2. **Start both backend and frontend concurrently**:
+   ```bash
+   npm run dev
+   ```
 
-The API server starts at `http://localhost:5000`. On first run, the SQLite database is auto-created and seeded with 5 sample todos.
+This will concurrently run the Express backend on `http://localhost:5000` and the React frontend on `http://localhost:5173`. On first run, the SQLite database is auto-created and seeded.
 
-### 3. Start the Frontend
+---
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+### 🔧 Option B: Manual Folder-by-Folder Setup
 
-The React app starts at `http://localhost:5173`. API requests are automatically proxied to the backend.
+1. **Start the Backend**:
+   ```bash
+   cd backend
+   npm install
+   npm run dev
+   ```
+   The API server starts at `http://localhost:5000`.
+
+2. **Start the Frontend**:
+   ```bash
+   cd ../frontend
+   npm install
+   npm run dev
+   ```
+   The React app starts at `http://localhost:5173`.
+
+---
 
 ### 4. Open in Browser
 
 Navigate to **http://localhost:5173/todos** to see the application.
+
 
 ---
 
