@@ -63,6 +63,7 @@ const TodoListPage = () => {
       toast.success('Task created! 🎉');
       setShowForm(false);
       fetchTodos();
+      window.dispatchEvent(new Event('taskflow-update'));
     } catch (error) {
       toast.error(error.message || 'Failed to create task');
     }
@@ -74,6 +75,7 @@ const TodoListPage = () => {
       toast.success('Task updated! ✨');
       setEditingTodo(null);
       fetchTodos();
+      window.dispatchEvent(new Event('taskflow-update'));
     } catch (error) {
       toast.error(error.message || 'Failed to update task');
     }
@@ -83,6 +85,7 @@ const TodoListPage = () => {
     try {
       await updateTodo(id, updatedFields);
       fetchTodos();
+      window.dispatchEvent(new Event('taskflow-update'));
     } catch (error) {
       console.error(error);
     }
@@ -92,6 +95,7 @@ const TodoListPage = () => {
     try {
       await toggleTodo(id);
       fetchTodos();
+      window.dispatchEvent(new Event('taskflow-update'));
     } catch (error) {
       toast.error('Failed to toggle task');
     }
@@ -103,6 +107,7 @@ const TodoListPage = () => {
       toast.success('Task deleted');
       setDeleteTarget(null);
       fetchTodos();
+      window.dispatchEvent(new Event('taskflow-update'));
     } catch (error) {
       toast.error('Failed to delete task');
     }

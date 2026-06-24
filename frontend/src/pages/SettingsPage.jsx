@@ -86,6 +86,7 @@ const SettingsPage = () => {
         }
 
         toast.success(`Successfully restored ${successCount} tasks! 📤`);
+        window.dispatchEvent(new Event('taskflow-update'));
       } catch (err) {
         toast.error('Restoration failed. Invalid JSON structure.');
         console.error(err);

@@ -37,6 +37,7 @@ const MatrixPage = () => {
     try {
       await toggleTodo(id);
       fetchTodos();
+      window.dispatchEvent(new Event('taskflow-update'));
     } catch (e) {
       toast.error('Failed to toggle task');
     }
@@ -46,6 +47,7 @@ const MatrixPage = () => {
     try {
       await updateTodo(id, updatedFields);
       fetchTodos();
+      window.dispatchEvent(new Event('taskflow-update'));
     } catch (error) {
       console.error(error);
     }
@@ -57,6 +59,7 @@ const MatrixPage = () => {
       toast.success('Task updated! ✨');
       setEditingTodo(null);
       fetchTodos();
+      window.dispatchEvent(new Event('taskflow-update'));
     } catch (e) {
       toast.error('Failed to update task');
     }
@@ -68,6 +71,7 @@ const MatrixPage = () => {
       toast.success('Task deleted');
       setDeleteTarget(null);
       fetchTodos();
+      window.dispatchEvent(new Event('taskflow-update'));
     } catch (error) {
       toast.error('Failed to delete task');
     }

@@ -16,13 +16,12 @@ const Header = () => {
     overdue: 0,
   });
 
-  // Fetch stats on mount and whenever the path changes (ensures stats are fresh)
+  // Fetch stats on mount, route changes, or database updates
   useEffect(() => {
     const fetchLatestStats = async () => {
       try {
         const response = await getStats();
         if (response && response.success !== false) {
-          // Check if response is wrapped in { success, data }
           const statsData = response.data || response;
           setStats(statsData);
         }
@@ -30,7 +29,14 @@ const Header = () => {
         console.error('Failed to load header stats:', err);
       }
     };
+
     fetchLatestStats();
+
+    // Subscribe to task updates
+    window.addEventListener('taskflow-update', fetchLatestStats);
+    return () => {
+      window.removeEventListener('taskflow-update', fetchLatestStats);
+    };
   }, [location.pathname]);
 
   const todayStr = new Date().toLocaleDateString('en-US', {

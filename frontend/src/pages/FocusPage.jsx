@@ -34,6 +34,7 @@ const FocusPage = () => {
       await toggleTodo(todoId);
       fetchTodos();
       toast.success('Outstanding! Task completed via focus session! 🏆');
+      window.dispatchEvent(new Event('taskflow-update'));
     } catch (e) {
       toast.error('Failed to complete focus task');
     }

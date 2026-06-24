@@ -12,6 +12,7 @@ const Footer = () => {
   const [stats, setStats] = useState({ total: 0, completed: 0 });
   const [dbStatus, setDbStatus] = useState('Online');
 
+  // Fetch stats on mount, route changes, or database updates
   useEffect(() => {
     const fetchLatestStats = async () => {
       try {
@@ -29,7 +30,14 @@ const Footer = () => {
         setDbStatus('Error');
       }
     };
+
     fetchLatestStats();
+
+    // Subscribe to task updates
+    window.addEventListener('taskflow-update', fetchLatestStats);
+    return () => {
+      window.removeEventListener('taskflow-update', fetchLatestStats);
+    };
   }, [location.pathname]);
 
   const completionPercent = stats.total > 0 

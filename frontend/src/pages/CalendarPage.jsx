@@ -36,6 +36,7 @@ const CalendarPage = () => {
       toast.success('Task updated! ✨');
       setEditingTodo(null);
       fetchTodos();
+      window.dispatchEvent(new Event('taskflow-update'));
     } catch (e) {
       toast.error('Failed to update task');
     }
