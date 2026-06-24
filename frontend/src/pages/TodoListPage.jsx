@@ -1,41 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPlus, FiInbox, FiGrid, FiList, FiDownload, FiUpload, FiCalendar } from 'react-icons/fi';
+import { FiPlus, FiInbox } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 import TodoCard from '../components/TodoCard';
 import TodoForm from '../components/TodoForm';
 import FilterBar from '../components/FilterBar';
-import StatsPanel from '../components/StatsPanel';
 import ConfirmModal from '../components/ConfirmModal';
-import PomodoroTimer from '../components/PomodoroTimer';
-import CalendarView from '../components/CalendarView';
-import KanbanBoard from '../components/KanbanBoard';
 import {
   getAllTodos,
   createTodo,
   updateTodo,
   deleteTodo,
   toggleTodo,
-  getStats,
 } from '../services/api';
 
 /**
- * TodoListPage — Main task list page with full CRUD functionality
- * Features: Stats panel, filter bar, animated todo grid,
- * inline editing, confirm modals, empty/loading states,
- * and Eisenhower Matrix Quadrants View
+ * TodoListPage — Renders the standard task list backlog.
+ * Handles search, complex filters, status toggles, inline editing, and task creation.
  */
 const TodoListPage = () => {
-  // ---- State Management ----
   const [todos, setTodos] = useState([]);
-  const [viewMode, setViewMode] = useState('list'); // 'list' or 'matrix'
-  const [stats, setStats] = useState({
-    total: 0,
-    completed: 0,
-    pending: 0,
-    overdue: 0,
-  });
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
@@ -48,9 +33,6 @@ const TodoListPage = () => {
     sort: 'createdAt',
   });
 
-  // ---- Data Fetching ----
-
-  /** Fetch todos with current filter parameters */
   const fetchTodos = useCallback(async () => {
     try {
       setLoading(true);
@@ -65,236 +47,97 @@ const TodoListPage = () => {
       setTodos(Array.isArray(data) ? data : data.todos || []);
     } catch (error) {
       toast.error('Failed to load tasks');
-      console.error('Fetch todos error:', error);
+      console.error(error);
     } finally {
       setLoading(false);
     }
   }, [filters]);
 
-  /** Fetch aggregate statistics */
-  const fetchStats = useCallback(async () => {
-    try {
-      const data = await getStats();
-      setStats(data);
-    } catch (error) {
-      console.error('Fetch stats error:', error);
-    }
-  }, []);
-
-  // Initial data fetch and re-fetch on filter changes
   useEffect(() => {
     fetchTodos();
-    fetchStats();
-  }, [fetchTodos, fetchStats]);
+  }, [fetchTodos]);
 
-  // ---- CRUD Operations ----
-
-  /** Create a new todo */
   const handleCreate = async (formData) => {
     try {
       await createTodo(formData);
-      toast.success('Task created successfully! 🎉');
+      toast.success('Task created! 🎉');
       setShowForm(false);
       fetchTodos();
-      fetchStats();
     } catch (error) {
       toast.error(error.message || 'Failed to create task');
     }
   };
 
-  /** Update an existing todo */
-  /** Update an existing todo */
   const handleUpdate = async (formData) => {
     try {
       await updateTodo(editingTodo.id, formData);
-      toast.success('Task updated successfully! ✨');
+      toast.success('Task updated! ✨');
       setEditingTodo(null);
       fetchTodos();
-      fetchStats();
     } catch (error) {
       toast.error(error.message || 'Failed to update task');
     }
   };
 
-  /** Update a card property directly (like checklist toggle or priority shift) */
   const handleUpdateCard = async (id, updatedFields) => {
     try {
       await updateTodo(id, updatedFields);
       fetchTodos();
-      fetchStats();
     } catch (error) {
-      toast.error('Failed to update task checklist');
       console.error(error);
     }
   };
 
-  /** Export all tasks to JSON file */
-  const handleExport = () => {
-    try {
-      if (todos.length === 0) {
-        toast.error('No tasks to export!');
-        return;
-      }
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(todos, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `taskflow_backup_${new Date().toISOString().split('T')[0]}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      toast.success('Tasks exported successfully! 📥');
-    } catch (e) {
-      toast.error('Export failed');
-    }
-  };
-
-  /** Import tasks from JSON file */
-  const handleImport = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const importedTodos = JSON.parse(event.target.result);
-        if (!Array.isArray(importedTodos)) {
-          toast.error('Invalid file format. Must be a JSON array of tasks.');
-          return;
-        }
-
-        let successCount = 0;
-        setLoading(true);
-
-        for (const t of importedTodos) {
-          if (t.title) {
-            // Re-create each todo on the server
-            await createTodo({
-              title: t.title,
-              description: t.description || '',
-              priority: t.priority || 'low',
-              category: t.category || 'General',
-              dueDate: t.dueDate || null,
-              subtasks: t.subtasks || [],
-              tags: t.tags || [],
-            });
-            successCount++;
-          }
-        }
-
-        toast.success(`Successfully imported ${successCount} tasks! 📤`);
-        fetchTodos();
-        fetchStats();
-      } catch (err) {
-        toast.error('Import failed. Invalid JSON structure.');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  /** Toggle todo completion status */
   const handleToggle = async (id) => {
     try {
       await toggleTodo(id);
       fetchTodos();
-      fetchStats();
     } catch (error) {
       toast.error('Failed to toggle task');
     }
   };
 
-  /** Handles completing a task when its Pomodoro timer expires */
-  const handleCompleteFocus = async (todoId) => {
-    try {
-      await toggleTodo(todoId);
-      fetchTodos();
-      fetchStats();
-      toast.success('Awesome! Focus task completed! 🏆');
-    } catch (e) {
-      toast.error('Failed to complete focus task');
-    }
-  };
-
-  /** Confirm and execute deletion */
   const handleDeleteConfirm = async () => {
     try {
       await deleteTodo(deleteTarget);
       toast.success('Task deleted');
       setDeleteTarget(null);
       fetchTodos();
-      fetchStats();
     } catch (error) {
       toast.error('Failed to delete task');
     }
   };
 
-  /** Open edit mode for a specific todo */
-  const handleEdit = (todo) => {
-    setEditingTodo(todo);
-    setShowForm(false); // Close create form if open
-  };
-
-  // ---- Computed Values ----
-
-  /** Format today's date for the page subtitle */
-  const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-
-  // Page animation variants
-  const pageVariants = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1, transition: { duration: 0.5 } },
-    exit: { opacity: 0, transition: { duration: 0.3 } },
-  };
-
   return (
     <motion.div
       className="page-container"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
     >
-      {/* ---- Page Header ---- */}
-      <motion.div
-        className="page-header"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      {/* Page header and add button */}
+      <div className="page-header" style={{ marginBottom: '16px' }}>
         <div>
-          <h1 className="page-title">My Tasks</h1>
-          <p className="page-subtitle">{today}</p>
+          <h1 className="page-title">Tasks Backlog</h1>
+          <p className="page-subtitle">Manage, search, and filter your daily productivity checklist</p>
         </div>
 
-        {/* Add Task Button */}
         <motion.button
           className="btn btn-primary"
           onClick={() => {
             setShowForm(!showForm);
             setEditingTodo(null);
           }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
         >
-          <FiPlus size={20} />
-          {showForm ? 'Close' : 'Add Task'}
+          <FiPlus size={18} />
+          {showForm ? 'Cancel' : 'New Task'}
         </motion.button>
-      </motion.div>
+      </div>
 
-      {/* ---- Stats Panel ---- */}
-      <StatsPanel stats={stats} />
-
-      {/* ---- Pomodoro Focus Space ---- */}
-      <PomodoroTimer todos={todos} onCompleteFocus={handleCompleteFocus} />
-
-      {/* ---- Create Form (animated expand/collapse) ---- */}
+      {/* Task Creation Panel overlay */}
       <AnimatePresence>
         {showForm && (
           <TodoForm
@@ -304,7 +147,7 @@ const TodoListPage = () => {
         )}
       </AnimatePresence>
 
-      {/* ---- Edit Form (inline, replaces create form) ---- */}
+      {/* Task Editing Panel overlay */}
       <AnimatePresence>
         {editingTodo && (
           <TodoForm
@@ -315,232 +158,66 @@ const TodoListPage = () => {
         )}
       </AnimatePresence>
 
-      {/* ---- View Switcher & Backup Actions ---- */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-        <div className="view-tabs" style={{ margin: 0 }}>
-          <button 
-            className={`view-tab-btn ${viewMode === 'list' ? 'active' : ''}`}
-            onClick={() => setViewMode('list')}
-          >
-            <FiList size={16} /> List Board
-          </button>
-          <button 
-            className={`view-tab-btn ${viewMode === 'kanban' ? 'active' : ''}`}
-            onClick={() => setViewMode('kanban')}
-          >
-            <FiGrid size={16} /> Kanban Board
-          </button>
-          <button 
-            className={`view-tab-btn ${viewMode === 'matrix' ? 'active' : ''}`}
-            onClick={() => setViewMode('matrix')}
-          >
-            <FiGrid size={16} /> Eisenhower Matrix
-          </button>
-          <button 
-            className={`view-tab-btn ${viewMode === 'calendar' ? 'active' : ''}`}
-            onClick={() => setViewMode('calendar')}
-          >
-            <FiCalendar size={16} /> Deadlines Calendar
-          </button>
-        </div>
+      {/* Filters and List scroll wrapper */}
+      <div className="todo-scroll-body" style={{ flex: 1, paddingRight: '8px' }}>
+        
+        {/* Sticky filter bar */}
+        <FilterBar filters={filters} onFilterChange={setFilters} />
 
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={handleExport} className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: '0.85rem' }}>
-            <FiDownload size={14} style={{ marginRight: '6px' }} /> Export Backup
-          </button>
-          <label className="btn btn-secondary" style={{ padding: '8px 14px', fontSize: '0.85rem', cursor: 'pointer', margin: 0, display: 'inline-flex', alignItems: 'center' }}>
-            <FiUpload size={14} style={{ marginRight: '6px' }} /> Import Backup
-            <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
-          </label>
-        </div>
+        {loading ? (
+          <div className="loading-container">
+            <div className="spinner" />
+            <p className="loading-text">Loading backlog tasks...</p>
+          </div>
+        ) : todos.length === 0 ? (
+          <motion.div
+            className="empty-state"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <div className="empty-state-icon">
+              <FiInbox size={48} />
+            </div>
+            <h3 className="empty-state-title">No tasks found</h3>
+            <p className="empty-state-text">
+              {filters.search || filters.priority || filters.category || filters.status
+                ? 'No tasks match your filter configurations. Try adjusting them.'
+                : 'Create your first productivity task to begin organizing!'}
+            </p>
+            {!filters.search && !filters.priority && !filters.category && !filters.status && (
+              <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+                <FiPlus size={16} style={{ marginRight: '6px' }} /> Create Task
+              </button>
+            )}
+          </motion.div>
+        ) : (
+          <motion.div
+            className="todo-grid"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: {
+                transition: { staggerChildren: 0.05 },
+              },
+            }}
+          >
+            <AnimatePresence mode="popLayout">
+              {todos.map((todo) => (
+                <TodoCard
+                  key={todo.id}
+                  todo={todo}
+                  onToggle={handleToggle}
+                  onDelete={(id) => setDeleteTarget(id)}
+                  onEdit={(t) => setEditingTodo(t)}
+                  onUpdate={handleUpdateCard}
+                />
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        )}
       </div>
 
-      {/* ---- Filter Bar ---- */}
-      <FilterBar filters={filters} onFilterChange={setFilters} />
-
-      {/* ---- Todo Grid / Loading / Empty States ---- */}
-      {loading ? (
-        /* Loading State */
-        <div className="loading-container">
-          <div className="spinner" />
-          <p className="loading-text">Loading tasks...</p>
-        </div>
-      ) : todos.length === 0 ? (
-        /* Empty State */
-        <motion.div
-          className="empty-state"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="empty-state-icon">
-            <FiInbox size={64} />
-          </div>
-          <h2 className="empty-state-title">No tasks yet</h2>
-          <p className="empty-state-text">
-            {filters.search ||
-            filters.priority ||
-            filters.category ||
-            filters.status
-              ? 'No tasks match your filters. Try adjusting them.'
-              : 'Start organizing your day by adding your first task!'}
-          </p>
-          {!filters.search &&
-            !filters.priority &&
-            !filters.category &&
-            !filters.status && (
-              <motion.button
-                className="btn btn-primary"
-                onClick={() => setShowForm(true)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <FiPlus size={20} /> Add Your First Task
-              </motion.button>
-            )}
-        </motion.div>
-      ) : viewMode === 'kanban' ? (
-        /* Kanban Board View */
-        <KanbanBoard
-          todos={todos}
-          onToggle={handleToggle}
-          onDelete={(id) => setDeleteTarget(id)}
-          onEdit={handleEdit}
-          onUpdate={handleUpdateCard}
-        />
-      ) : viewMode === 'calendar' ? (
-        /* Deadlines Calendar View */
-        <CalendarView
-          todos={todos}
-          onSelectTodo={handleEdit}
-        />
-      ) : viewMode === 'matrix' ? (
-        /* Eisenhower Matrix View */
-        <div className="matrix-grid">
-          {/* Quadrant 1: Urgent & Important */}
-          <div className="matrix-quadrant q-urgent-important">
-            <div className="matrix-quadrant-header">
-              <h3 className="matrix-quadrant-title">🔴 Urgent & Important (Do First)</h3>
-              <span className="matrix-quadrant-subtitle">Tasks with urgent priority</span>
-            </div>
-            <div className="matrix-quadrant-content">
-              {todos.filter((t) => t.priority === 'urgent').length === 0 ? (
-                <div className="matrix-empty-text">No urgent tasks</div>
-              ) : (
-                todos.filter((t) => t.priority === 'urgent').map((todo) => (
-                  <TodoCard
-                    key={todo.id}
-                    todo={todo}
-                    onToggle={handleToggle}
-                    onDelete={(id) => setDeleteTarget(id)}
-                    onEdit={handleEdit}
-                    onUpdate={handleUpdateCard}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Quadrant 2: Important, Not Urgent */}
-          <div className="matrix-quadrant q-important-noturgent">
-            <div className="matrix-quadrant-header">
-              <h3 className="matrix-quadrant-title">🟠 Important, Not Urgent (Schedule)</h3>
-              <span className="matrix-quadrant-subtitle">Tasks with high priority</span>
-            </div>
-            <div className="matrix-quadrant-content">
-              {todos.filter((t) => t.priority === 'high').length === 0 ? (
-                <div className="matrix-empty-text">No high priority tasks</div>
-              ) : (
-                todos.filter((t) => t.priority === 'high').map((todo) => (
-                  <TodoCard
-                    key={todo.id}
-                    todo={todo}
-                    onToggle={handleToggle}
-                    onDelete={(id) => setDeleteTarget(id)}
-                    onEdit={handleEdit}
-                    onUpdate={handleUpdateCard}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Quadrant 3: Urgent, Not Important */}
-          <div className="matrix-quadrant q-urgent-notimportant">
-            <div className="matrix-quadrant-header">
-              <h3 className="matrix-quadrant-title">🟡 Urgent, Not Important (Delegate)</h3>
-              <span className="matrix-quadrant-subtitle">Tasks with medium priority</span>
-            </div>
-            <div className="matrix-quadrant-content">
-              {todos.filter((t) => t.priority === 'medium').length === 0 ? (
-                <div className="matrix-empty-text">No medium priority tasks</div>
-              ) : (
-                todos.filter((t) => t.priority === 'medium').map((todo) => (
-                  <TodoCard
-                    key={todo.id}
-                    todo={todo}
-                    onToggle={handleToggle}
-                    onDelete={(id) => setDeleteTarget(id)}
-                    onEdit={handleEdit}
-                    onUpdate={handleUpdateCard}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Quadrant 4: Not Urgent & Not Important */}
-          <div className="matrix-quadrant q-noturgent-notimportant">
-            <div className="matrix-quadrant-header">
-              <h3 className="matrix-quadrant-title">🟢 Low Priority / Eliminate</h3>
-              <span className="matrix-quadrant-subtitle">Tasks with low priority</span>
-            </div>
-            <div className="matrix-quadrant-content">
-              {todos.filter((t) => t.priority === 'low').length === 0 ? (
-                <div className="matrix-empty-text">No low priority tasks</div>
-              ) : (
-                todos.filter((t) => t.priority === 'low').map((todo) => (
-                  <TodoCard
-                    key={todo.id}
-                    todo={todo}
-                    onToggle={handleToggle}
-                    onDelete={(id) => setDeleteTarget(id)}
-                    onEdit={handleEdit}
-                    onUpdate={handleUpdateCard}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      ) : (
-        /* Regular Todo Cards Grid */
-        <motion.div
-          className="todo-grid"
-          initial="hidden"
-          animate="visible"
-          variants={{
-            visible: {
-              transition: { staggerChildren: 0.08 },
-            },
-          }}
-        >
-          <AnimatePresence mode="popLayout">
-            {todos.map((todo) => (
-              <TodoCard
-                key={todo.id}
-                todo={todo}
-                onToggle={handleToggle}
-                onDelete={(id) => setDeleteTarget(id)}
-                onEdit={handleEdit}
-                onUpdate={handleUpdateCard}
-              />
-            ))}
-          </AnimatePresence>
-        </motion.div>
-      )}
-
-      {/* ---- Delete Confirmation Modal ---- */}
+      {/* Delete confirmation modal */}
       <ConfirmModal
         isOpen={!!deleteTarget}
         onConfirm={handleDeleteConfirm}

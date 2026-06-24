@@ -231,8 +231,10 @@ const TodoDetailPage = () => {
         <FiArrowLeft size={18} /> Back to Tasks
       </motion.button>
 
-      {/* Edit Form (inline) */}
-      <AnimatePresence>
+      {/* ---- Scrollable Task Board Panel ---- */}
+      <div className="todo-scroll-body">
+        {/* Edit Form (inline) */}
+        <AnimatePresence>
         {isEditing && (
           <TodoForm
             initialData={todo}
@@ -400,6 +402,20 @@ const TodoDetailPage = () => {
           </div>
         </motion.div>
       )}
+
+      {/* End Scrollable Panel */}
+      </div>
+
+      {/* ---- App Status Bar (Footer) ---- */}
+      <div className="app-status-bar">
+        <div className="status-bar-left">
+          <span className="status-dot"></span>
+          <span>SQLite Database: Active</span>
+        </div>
+        <div className="status-bar-right">
+          <span>Focus Timer: Ready | Status: {todo?.completed ? 'Completed' : 'Pending'}</span>
+        </div>
+      </div>
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal

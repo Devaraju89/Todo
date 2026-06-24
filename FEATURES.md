@@ -6,134 +6,145 @@ This document provides a comprehensive listing and description of every feature 
 
 ## Table of Contents
 
-1. [Premium Spatial UI Design System](#1-premium-spatial-ui-design-system)
-2. [SaaS Kanban Board View](#2-saas-kanban-board-view)
-3. [Deadlines Calendar View](#3-deadlines-calendar-view)
-4. [Pomodoro Focus Timer Integration](#4-pomodoro-focus-timer-integration)
-5. [Advanced Eisenhower Matrix View](#5-advanced-eisenhower-matrix-view)
-6. [Subtasks Checklist System](#6-subtasks-checklist-system)
-7. [Tags & Labels System](#7-tags--labels-system)
-8. [Data Backup (Export & Import)](#8-data-backup-export--import)
-9. [Core CRUD Operations](#9-core-crud-operations)
-10. [Todo Properties Matrix](#10-todo-properties-matrix)
-11. [Search & Filtering](#11-search--filtering)
-12. [Sorting](#12-sorting)
-13. [Statistics Dashboard](#13-statistics-dashboard)
-14. [Single Todo Detail View](#14-single-todo-detail-view)
+1. [Desktop-Grade Application Shell Grid](#1-desktop-grade-application-shell-grid)
+2. [Visual Themes Customizer](#2-visual-themes-customizer)
+3. [Core Tasks Backlog View](#3-core-tasks-backlog-view)
+4. [SaaS Kanban Board Page](#4-saas-kanban-board-page)
+5. [Eisenhower Priority Matrix Page](#5-eisenhower-priority-matrix-page)
+6. [Deadlines Calendar Page](#6-deadlines-calendar-page)
+7. [Pomodoro Focus Zone Page](#7-pomodoro-focus-zone-page)
+8. [Productivity Insights & Analytics Page](#8-productivity-insights--analytics-page)
+9. [Subtasks Checklist System](#9-subtasks-checklist-system)
+10. [Tags & Labels System](#10-tags--labels-system)
+11. [Data Backup (Export & Import)](#11-data-backup-export--import)
+12. [Core CRUD Operations](#12-core-crud-operations)
+13. [Todo Properties Matrix](#13-todo-properties-matrix)
+14. [Search, Filtering & Sorting](#14-search-filtering--sorting)
+15. [Single Todo Detail View](#15-single-todo-detail-view)
 
 ---
 
-## 1. Premium Spatial UI Design System
+## 1. Desktop-Grade Application Shell Grid
 
-TaskFlow implements a **Spatial UI Design** language inspired by Apple Vision Pro, redesigned with a **Warm Amethyst-Rose-Gold** color scheme (no blue tones used):
-
-| Element | Visual Style |
-|-----------|---------------|
-| **Theme Base** | Deep dark Obsidian Amethyst background (`#0a0510`) with layered surfaces. |
-| **Glassmorphism** | Translucent cards with `backdrop-filter: blur(24px)` and borders made of `rgba(255,255,255,0.07)`. |
-| **Ambient Blobs** | Dynamic background gradient blobs (radial purple `#c084fc` to gold `#fbbf24`) float organic pathways using CSS animations. |
-| **Hover Transitions** | Todo cards respond to hover by shifting upward (`translateY(-4px)`) and multiplying their soft layered shadows. |
-| **Typography** | Styled with the geometric sans-serif **Inter** font family. |
+TaskFlow implements a full-viewport app layout spanning `100vw` and `100vh` without page double scrollbars, utilizing a rigid CSS Grid. The shell consists of three persistent layout nodes:
+- **Global Header**: Fixed at the top (`height: 70px`). Displays the branding logo, "TaskFlow PRO" title, live stats metrics (Total, Completed, Pending, Overdue) that query automatically on navigation, current date widget, and user profile avatar.
+- **Global Left Sidebar**: Docked on the left (`width: 240px`). Holds navigation links with text labels and custom icons, collapsing to `70px` on mobile. Uses spring-based Framer Motion overlays to slide indicator dots on active pages.
+- **Global Footer**: Pinned at the bottom (`height: 36px`). Houses database diagnostics ("SQLite Active"), current backend environment readout, and a real-time progress bar computing task completion percentages.
 
 ---
 
-## 2. SaaS Kanban Board View
-- **Location**: Todo List Page (`/todos`)
-- **Trigger**: Toggle the view mode tabs to **Kanban Board**
+## 2. Visual Themes Customizer
+- **Location**: Settings page (`/settings`)
 - **Details**:
-  - The Kanban Board distributes todos into three status-driven columns:
-    - **To Do**: Tasks that have not been started or have no checklist progress.
-    - **In Progress**: Tasks that are actively being worked on (i.e. have checklist subtasks that are partially completed).
-    - **Completed**: Tasks that are finished (`completed === 1`).
-  - Evaluators can easily transition tasks between columns using quick-action buttons (e.g. *Start Work*, *Move Back*, *Complete*). Column task counters are updated dynamically.
+  - Allows the user to switch the app's visual identity globally. Accent lighting styles rebind instantly and persist across restarts via `localStorage`:
+    - **Amethyst Deep** (Default): Warm purple-pink neon glow accents.
+    - **Sunset Gold**: Amber gold, orange, and rose accents.
+    - **Forest Emerald**: Lush mint and emerald green organic accents.
+    - **Obsidian Dark**: Classic steel-grey and high-contrast off-white accents.
 
 ---
 
-## 3. Deadlines Calendar View
-- **Location**: Todo List Page (`/todos`)
-- **Trigger**: Toggle the view mode tabs to **Deadlines Calendar**
+## 3. Core Tasks Backlog View
+- **Location**: `/todos`
 - **Details**:
-  - Renders a monthly calendar grid calculating padding days from previous/next months.
-  - Days with deadlines are annotated with priority-colored indicator dots mapping to the pending tasks.
-  - Clicking any date displays an agenda list on the right showing tasks due on that day. Clicking an agenda task launches its Edit interface immediately.
+  - Displays the primary checklists backlog grid. Contains real-time text search and filter drop-downs.
+  - Clicking "+ New Task" slides down the validation form. Cards display custom category indicators and checklists with active triggers.
 
 ---
 
-## 4. Pomodoro Focus Timer Integration
-- **Location**: Todo List Page (`/todos`), placed prominently at the top
+## 4. SaaS Kanban Board Page
+- **Location**: `/kanban`
 - **Details**:
-  - A premium floating panel featuring a countdown timer.
-  - **Modes**: Support for `Focus` (25 min), `Short Break` (5 min), and `Long Break` (15 min) sessions.
-  - **Integrated Task Selection**: Allows users to select any pending task from a dropdown menu. If a focus session finishes while working on a task, it triggers a focus completion callback to mark the task completed.
-  - Tracks session count dynamically in the session dashboard.
+  - Distributes tasks into three status-driven pipelines:
+    - **To Do**: Tasks with no checklist progress.
+    - **In Progress**: Tasks with active checklist step progress.
+    - **Completed**: Checked-off tasks.
+  - Features independent column scrollbars and quick-action state triggers (Start, Reopen, Move Back) to update task progress.
 
 ---
 
-## 5. Advanced Eisenhower Matrix View
-- **Location**: Todo List Page (`/todos`)
-- **Trigger**: Toggle the view mode tabs to **Eisenhower Matrix**
+## 5. Eisenhower Priority Matrix Page
+- **Location**: `/matrix`
 - **Details**:
-  - The Eisenhower Matrix organizes todos into a **2x2 priority grid** based on urgency and importance:
-    - **Quadrant 1 (Do First)**: Urgent & Important (displayed as 🔴 Urgent priority tasks).
-    - **Quadrant 2 (Schedule)**: Important, Not Urgent (displayed as 🟠 High priority tasks).
-    - **Quadrant 3 (Delegate)**: Urgent, Not Important (displayed as 🟡 Medium priority tasks).
-    - **Quadrant 4 (Eliminate)**: Not Urgent & Not Important (displayed as 🟢 Low priority tasks).
-  - Each quadrant acts as an active mini-board displaying matching todo cards. Evaluators can toggle completion, edit, or delete items directly from the quadrants.
+  - Sorts backlog items dynamically into a 2x2 grid representing the quadrants of productivity:
+    - **Do First**: Urgent & Important tasks (🔴 Urgent priority).
+    - **Schedule**: Important, Not Urgent tasks (🟠 High priority).
+    - **Delegate**: Urgent, Not Important tasks (🟡 Medium priority).
+    - **Eliminate**: Not Urgent & Not Important tasks (🟢 Low priority).
 
 ---
 
-## 6. Subtasks Checklist System
-- **Location**: Creation Form, Todo Card, and Todo Detail Page
-- **Creation**: Users can add multiple checkbox subtasks/steps (e.g. *Step 1: Write backend tests*, *Step 2: Connect SQLite*) when creating or editing a task.
-- **Card Progress Meter**: A dynamic progress bar appears on each todo card showing the ratio and percentage of completed steps (e.g. `2/5 (40%)`).
-- **Interactive Toggles**: On both the card list view and the detail page, checklist checkboxes are fully interactive and instantly update the server without needing to enter edit mode.
-
----
-
-## 7. Tags & Labels System
-- **Location**: Creation Form, Todo Card, and Todo Detail Page
+## 6. Deadlines Calendar Page
+- **Location**: `/calendar`
 - **Details**:
-  - Allows tagging todos with custom labels (e.g., `#work`, `#personal`, `#learning`, `#bug`).
-  - Tags are displayed as custom pill chips on cards and detail panels.
-  - Search queries check against tags, enabling tag-based query indexing.
+  - Generates a month grid plotting date deadlines. Days with due tasks are marked with priority indicators. Clicking a day loads an agenda sidebar, and clicking a task launches edit dialogs.
 
 ---
 
-## 8. Data Backup (Export & Import)
-- **Location**: Todo List Page utility bar
-- **Export Backup**: Downloads all current tasks as a formatted `.json` backup file.
-- **Import Backup**: Standard file uploader parses imported JSON files and creates/restores tasks directly to the SQLite database. Supports bulk data restore.
+## 7. Pomodoro Focus Zone Page
+- **Location**: `/focus`
+- **Details**:
+  - Includes a visual progress circle timer. Integrates with a task selector allowing users to lock onto a pending todo. When the 25-minute timer finishes, it completes the task in SQLite.
 
 ---
 
-## 9. Core CRUD Operations
+## 8. Productivity Insights & Analytics Page
+- **Location**: `/analytics`
+- **Details**:
+  - Productivity dashboard compiling database statistics:
+    - **Productivity Score**: Completed vs total ratio displayed inside an animated SVG circular ring chart.
+    - **Priority distribution**: Graphical horizontal bar charts indicating task counts grouped by priority.
+    - **Category distribution**: Segmented visual metrics showing backlog volume across categories.
 
-### 9.1 Create Todo
-- **Trigger**: Click the "+ Add Task" button to expand the slide-down form.
-- **Fields**: Title (required), Description, Priority, Category, Due Date, Subtask steps, and Tag chips.
-- **Validation**: Rejects submissions with empty titles.
+---
+
+## 9. Subtasks Checklist System
+- **Location**: Todo Form, Todo Card, and Todo Detail Page
+- **Details**:
+  - Supports adding step-by-step checklists to tasks. Todo cards render progress bars (e.g. `2/5 completed`) representing subtask ratios. Checklist toggles are active and sync to SQLite instantly.
+
+---
+
+## 10. Tags & Labels System
+- **Location**: Todo Form, Todo Card, and Todo Detail Page
+- **Details**:
+  - Allows tagging tasks with custom label chips (e.g., `#work`, `#finance`). Search indexes query tags, enabling instant tag sorting.
+
+---
+
+## 11. Data Backup (Export & Import)
+- **Location**: Settings page (`/settings`)
+- **Details**:
+  - **Export JSON**: Downloads all SQLite task records as a formatted `.json` backup file.
+  - **Import JSON**: Uploads a backup file and executes bulk insertion into the SQLite database.
+
+---
+
+## 12. Core CRUD Operations
+
+### 12.1 Create Todo
 - **API**: `POST /api/todos`
+- Validates that task title is provided. Accepts descriptions, priority badges, categories, deadlines, checklists, and tag arrays.
 
-### 9.2 Read Todos (List)
-- Fetches all todos from the local SQLite database. Uses server-side filters and queries.
+### 12.2 Read Todos (List)
 - **API**: `GET /api/todos`
+- Retrieves todos from SQLite. Supports sorting and filters.
 
-### 9.3 Read Todo (Single Detail)
-- **Trigger**: Click on a todo's title in the list or matrix.
-- **Query Parameter**: Navigates to `/todo?id=<uuid>`, loading data from the query string parameters.
+### 12.3 Read Todo (Single Detail)
 - **API**: `GET /api/todos/:id`
+- Navigates to `/todo?id=<uuid>` to show detailed fields, timestamps, checklists, and tags.
 
-### 9.4 Update Todo
-- Opens the todo form pre-filled with existing fields, subtasks, and tags for comprehensive editing.
+### 12.4 Update Todo
 - **API**: `PUT /api/todos/:id`
+- Partially or fully updates a todo task's fields.
 
-### 9.5 Delete Todo
-- Triggers a glassmorphism confirmation modal. On confirm, deletes from SQLite with a exit transition.
+### 12.5 Delete Todo
 - **API**: `DELETE /api/todos/:id`
+- Removes a task from the database. Triggers glassmorphic confirmation modal prior to execution.
 
 ---
 
-## 10. Todo Properties Matrix
+## 13. Todo Properties Matrix
 
 Each todo item supports the following fields:
 
@@ -151,25 +162,12 @@ Each todo item supports the following fields:
 
 ---
 
-## 11. Search & Filtering
-- **Text Search**: Real-time queries matching **title**, **description**, and **tags**.
-- **Drop-down Filters**: Filter by Priority, Category, and status (All, Active, Completed).
-- **Clear Filter Button**: Reset all filtering criteria instantly.
+## 14. Search, Filtering & Sorting
+- **Search**: Matches title, description, and tags in real-time.
+- **Filtering**: Filters by priority, category, and status.
+- **Sorting**: Sorts by Created Date, Due Date, Priority (Urgent → Low), and alphabetical title.
 
 ---
 
-## 12. Sorting
-- **Options**: Created Date, Due Date, Priority (Urgent → Low), and alphabetical Title.
-
----
-
-## 13. Statistics Dashboard
-- Displays four stats counters: **Total**, **Completed**, **Pending**, and **Overdue**.
-- Features a circular SVG progress ring indicating overall completion percentage.
-
----
-
-## 14. Single Todo Detail View
-- Navigated via `?id=<uuid>`.
-- Displays relative deadlines (e.g. *Yesterday*, *Tomorrow*, *Overdue by 3 days*).
-- Displays full timestamps, subtask checklist items, and tags with edit/delete buttons.
+## 15. Single Todo Detail View
+- Displays full properties (timestamps, descriptions, subtask checklists, and tag chips) with toggles and edit/delete overlays.
